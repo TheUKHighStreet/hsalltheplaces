@@ -24,7 +24,7 @@ class LasIguanasGBSpider(SitemapSpider):
             item["street_address"] = merge_address_lines([location["addressLine1"], location["addressLine2"]])
             item["city"] = location["addressCity"]
             item["postcode"] = location["postcode"]
-            item["website"] = urljoin("https://www.frankieandbennys.com/restaurants/", location["slug"])
+            item["website"] = urljoin("hhttps://www.iguanas.co.uk/restaurants/", location["slug"])
             item["phone"] = location["phoneNumber"]
             item["email"] = location["email"]
 
