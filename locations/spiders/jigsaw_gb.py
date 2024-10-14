@@ -19,7 +19,7 @@ class JigsawGBSpider(Spider):
             item["branch"] = newlocation["name"]
             item["name"] = "Jigsaw"
             item["street_address"] = newlocation["address_2"]
-            item["lon"], item["lat"] = location["geometry"]["coordinates"]
+            item["geometry"] = location["geometry"]["coordinates"]
 
             opening_hours = OpeningHours()
             oh = newlocation["opening_hours"]
@@ -33,5 +33,5 @@ class JigsawGBSpider(Spider):
                 if "closed" not in time_range.lower():
                     open_time, close_time = time_range.split("-")
                     opening_hours.add_range(day, open_time, close_time)
-                    item["opening_hours"] = opening_hours
+            item["opening_hours"] = opening_hours        
             yield item
