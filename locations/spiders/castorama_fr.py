@@ -1,5 +1,6 @@
 from scrapy.spiders import SitemapSpider
 
+from locations.categories import Categories, apply_category
 from locations.hours import DAYS_EN, OpeningHours
 from locations.structured_data_spider import StructuredDataSpider
 
@@ -9,6 +10,7 @@ class CastoramaFRSpider(SitemapSpider, StructuredDataSpider):
     item_attributes = {"brand": "Castorama", "brand_wikidata": "Q966971"}
     sitemap_urls = ["https://www.castorama.fr/static/sitemap.xml"]
     sitemap_rules = [(r"/store/\d+", "parse_sd")]
+    drop_attributes = {"image"}
 
     def post_process_item(self, item, response, ld_data, **kwargs):
         oh = OpeningHours()
@@ -20,4 +22,5 @@ class CastoramaFRSpider(SitemapSpider, StructuredDataSpider):
                     opening_hour["closes"][0:5],
                 )
                 item["opening_hours"] = oh
+        apply_category(Categories.SHOP_HARDWARE, item)
         yield item

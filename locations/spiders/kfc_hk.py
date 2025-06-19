@@ -19,6 +19,7 @@ class KfcHKSpider(scrapy.Spider):
                 "actionName": "candao.storeStandard.getStoreList",
                 "langType": 2,
                 "content": {
+                    "cityId": 810000,
                     "businessType": ["3"],
                     "searchName": "",
                     "pageNow": 1,
@@ -44,7 +45,6 @@ class KfcHKSpider(scrapy.Spider):
             item["addr_full"] = store["storeAddress"]
             item["lon"], item["lat"] = store["coordinate"]
             item["ref"] = store["storeId"]
-            item["website"] = "https://www.kfchk.com/"
 
             item["opening_hours"] = OpeningHours()
             for rule in store["businessTimePros"]:
