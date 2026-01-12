@@ -1,9 +1,8 @@
 import json
-from typing import Any, Iterable
+from typing import Any, AsyncIterator, Iterable
 from urllib.parse import urlencode
 
-from scrapy import Request
-from scrapy.http import JsonRequest, Response
+from scrapy.http import JsonRequest, TextResponse
 from scrapy.spiders import Spider
 
 from locations.categories import Drink, Extras, PaymentMethods, apply_yes_no
@@ -51,8 +50,8 @@ class YextAnswersSpider(Spider):
     dataset_attributes = {"source": "api", "api": "yext"}
 
     endpoint: str = "https://liveapi.yext.com/v2/accounts/me/answers/vertical/query"
-    api_key: str = ""
-    experience_key: str = ""
+    api_key: str
+    experience_key: str
     api_version: str = "20220511"
     page_limit: int = 50
     locale: str = "en"
@@ -85,24 +84,26 @@ class YextAnswersSpider(Spider):
             meta={"offset": offset},
         )
 
-    def start_requests(self) -> Iterable[Request]:
+    async def start(self) -> AsyncIterator[JsonRequest]:
         yield self.make_request(0)
 
-    def parse(self, response: Response, **kwargs: Any) -> Any:
+    def parse(self, response: TextResponse, **kwargs: Any) -> Iterable[Feature | JsonRequest]:
         for location in response.json()["response"]["results"]:
             location = location["data"]
             item = DictParser.parse(location)
             item["branch"] = location.get("geomodifier")
 
-            self._parse_socials(item, location)
+            self.parse_socials(item, location)
 
             item["opening_hours"] = self.parse_opening_hours(location.get("hours"))
             if delivery_hours := location.get("deliveryHours"):
-                item["extras"]["opening_hours:delivery"] = self.parse_opening_hours(delivery_hours)
+                item["extras"]["opening_hours:delivery"] = self.parse_opening_hours(delivery_hours).as_opening_hours()
             if happy_hours := location.get("happyHours"):
-                item["extras"]["happy_hours"] = self.parse_opening_hours(happy_hours)
+                item["extras"]["happy_hours"] = self.parse_opening_hours(happy_hours).as_opening_hours()
             if drive_through_hours := location.get("driveThroughHours"):
-                item["extras"]["opening_hours:drive_through"] = self.parse_opening_hours(drive_through_hours)
+                item["extras"]["opening_hours:drive_through"] = self.parse_opening_hours(
+                    drive_through_hours
+                ).as_opening_hours()
 
             self.parse_payment_methods(location, item)
             self.parse_google_attributes(location, item)
@@ -112,7 +113,15 @@ class YextAnswersSpider(Spider):
         if len(response.json()["response"]["results"]) == self.page_limit:
             yield self.make_request(response.meta["offset"] + self.page_limit)
 
-    def _parse_socials(self, item: Feature, location: dict):
+    @staticmethod
+    def parse_socials(item: Feature, location: dict) -> None:
+        """
+        Parse contact and social media fields of information from the
+        supplied dictionary and add to the supplied item (Feature).
+        :param item: item to add contact and social media information to.
+        :param location: dictionary to parse information from.
+        :returns: None
+        """
         phones = []
         for phone_type in ["localPhone", "mainPhone", "mobilePhone"]:
             if phone := location.get(phone_type):
@@ -151,22 +160,27 @@ class YextAnswersSpider(Spider):
             else:
                 item["extras"]["website:menu"] = menu_url_dict.get("url")
 
-    def parse_opening_hours(self, hours: dict, **kwargs: Any) -> str | None:
-        if not hours:
-            return None
+    @staticmethod
+    def parse_opening_hours(hours: dict) -> OpeningHours:
+        """
+        Parse opening hours from the supplied dictionary and return an
+        OpeningHours object.
+        :param hours: dictionary provided by a Yext API.
+        :returns: OpeningHours object.
+        """
         oh = OpeningHours()
-        for day, rule in hours.items():
-            if not isinstance(rule, dict):
-                continue
-            if day == "holidayHours":
-                continue
-            if rule.get("isClosed") is True:
-                oh.set_closed(day)
-                continue
-            for time in rule["openIntervals"]:
-                oh.add_range(day, time["start"], time["end"])
-
-        return oh.as_opening_hours()
+        if hours:
+            for day, rule in hours.items():
+                if not isinstance(rule, dict):
+                    continue
+                if day == "holidayHours":
+                    continue
+                if rule.get("isClosed") is True:
+                    oh.set_closed(day)
+                    continue
+                for time in rule["openIntervals"]:
+                    oh.add_range(day, time["start"], time["end"])
+        return oh
 
     def parse_payment_methods(self, location: dict, item: Feature) -> None:
         if payment_methods := location.get("paymentOptions"):
