@@ -14,8 +14,7 @@ class LowesUSSpider(SitemapSpider):
     allowed_domains = ["lowes.com"]
     sitemap_urls = ["https://www.lowes.com/sitemap/store0.xml"]
     sitemap_rules = [(r"^https://www.lowes.com/store", "parse_store")]
-    user_agent = FIREFOX_LATEST
-    requires_proxy = True
+    custom_settings = {"USER_AGENT": FIREFOX_LATEST}
 
     def parse_hours(self, store_hours):
         opening_hours = OpeningHours()
