@@ -13,8 +13,7 @@ class RonaSpider(SitemapSpider):
     allowed_domains = ["www.rona.ca"]
     sitemap_urls = ["https://www.rona.ca/sitemap-stores-en.xml"]
     sitemap_rules = [("/store/", "parse_store")]
-    user_agent = BROWSER_DEFAULT
-    requires_proxy = True
+    custom_settings = {"USER_AGENT": BROWSER_DEFAULT}
 
     def parse_hours(self, hours):
         opening_hours = OpeningHours()
