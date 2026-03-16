@@ -15,13 +15,14 @@ class BambuSpider(Spider):
 
     # Start by acquiring a session cookie
     start_urls = ["https://www.drinkbambu.com/_api/v1/access-tokens"]
+    custom_settings = {"ROBOTSTXT_OBEY": False}
 
     def parse(self, response):
         # Now that we have a session cookie, send the actual request
         # TODO: This API seems to have a pagination mechanism (the response includes a cursor) but
         # I don't know how to use it. Requesting 999 results works ok for now.
         params = {
-            "urlParams": {"gridAppId": "26451472-ec1e-4598-a994-03f8b5503c63"},
+            "urlParams": {"viewMode": "site"},
             "body": {
                 "routerPrefix": "/properties",
                 "config": {
@@ -36,7 +37,12 @@ class BambuSpider(Spider):
                         }
                     }
                 },
-                "pageRoles": {"2ce8cb33-8752-4449-94d9-2d91ce00e549": {"id": "q4yo6", "title": "Stores (All)"}},
+                "pageRoles": {
+                    "2ce8cb33-8752-4449-94d9-2d91ce00e549": {
+                        "id": "q4yo6",
+                        "title": "Stores (All)",
+                    }
+                },
                 "requestInfo": {"formFactor": "desktop"},
                 "routerSuffix": "/",
                 "fullUrl": "https://www.drinkbambu.com/properties/",
@@ -59,6 +65,8 @@ class BambuSpider(Spider):
         result = response.json()["result"]
         if response.json().get("exception", False):
             raise RuntimeError(result["name"] + result["message"])
+        if response.json().get("status", 200) != 200:
+            raise RuntimeError(f"{result['status']}: {result['message']}")
         for location in result["data"]["items"]:
             location.update(location.pop("mapLocation", {}))
             item = DictParser.parse(location)
@@ -76,6 +84,7 @@ class BambuSpider(Spider):
             set_social_media(item, SocialMedia.YELP, location.get("yelp"))
             item["addr_full"] = location.get("address")
             item["branch"] = location.get("title", "").removeprefix("Bambu ")
+            item.pop("name")
 
             if location.get("instagram") != "https://www.instagram.com/bambudessertdrinks/":
                 set_social_media(item, SocialMedia.INSTAGRAM, location.get("instagram"))
