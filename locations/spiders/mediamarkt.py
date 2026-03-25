@@ -12,7 +12,6 @@ SATURN = {"brand": "Saturn", "brand_wikidata": "Q2543504"}
 
 class MediamarktSpider(StructuredDataSpider):
     name = "mediamarkt"
-    requires_proxy = True
     allowed_domains = [
         "www.mediamarkt.at",
         "www.mediamarkt.be",
