@@ -1,6 +1,6 @@
 from typing import Any
 
-import scrapy
+from scrapy import Spider
 from scrapy.http import Response
 
 from locations.dict_parser import DictParser
@@ -9,7 +9,7 @@ from locations.items import Feature
 from locations.user_agents import BROWSER_DEFAULT
 
 
-class TeremokRUSpider(scrapy.Spider):
+class TeremokRUSpider(Spider):
     name = "teremok_ru"
     allowed_domains = ["teremok.ru"]
     item_attributes = {"brand": "Теремок", "brand_wikidata": "Q4455593"}
