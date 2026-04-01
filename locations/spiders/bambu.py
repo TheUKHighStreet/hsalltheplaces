@@ -15,13 +15,14 @@ class BambuSpider(Spider):
 
     # Start by acquiring a session cookie
     start_urls = ["https://www.drinkbambu.com/_api/v1/access-tokens"]
+    custom_settings = {"ROBOTSTXT_OBEY": False}
 
     def parse(self, response):
         # Now that we have a session cookie, send the actual request
         # TODO: This API seems to have a pagination mechanism (the response includes a cursor) but
         # I don't know how to use it. Requesting 999 results works ok for now.
         params = {
-            "urlParams": {"gridAppId": "26451472-ec1e-4598-a994-03f8b5503c63"},
+            "urlParams": {"viewMode": "site"},
             "body": {
                 "routerPrefix": "/properties",
                 "config": {
@@ -36,19 +37,24 @@ class BambuSpider(Spider):
                         }
                     }
                 },
-                "pageRoles": {"2ce8cb33-8752-4449-94d9-2d91ce00e549": {"id": "q4yo6", "title": "Stores (All)"}},
+                "pageRoles": {
+                    "2ce8cb33-8752-4449-94d9-2d91ce00e549": {
+                        "id": "q4yo6",
+                        "title": "Stores (All)",
+                    }
+                },
                 "requestInfo": {"formFactor": "desktop"},
                 "routerSuffix": "/",
                 "fullUrl": "https://www.drinkbambu.com/properties/",
             },
         }
-        query = b64encode(compress(json.dumps(params, separators=(",", ":")).encode())).decode()
+        query = b64encode(compress(json.dumps(params, separators=(",", ":")).encode()), altchars=b"-_").decode()
         access_tokens = response.json()
         authorization = [
             app["instance"] for app in access_tokens["apps"].values() if app["instance"].startswith("wixcode-pub.")
         ][0]
         req = Request(
-            f"https://www.drinkbambu.com/_api/dynamic-pages-router/v1/pages?{query}",
+            f"https://www.drinkbambu.com/_api/dynamic-pages-router/v1/pages?.r={query}",
             headers={"authorization": authorization},
             callback=self.parse_pages,
         )
@@ -56,9 +62,12 @@ class BambuSpider(Spider):
         yield req
 
     def parse_pages(self, response):
-        result = response.json()["result"]
-        if response.json().get("exception", False):
-            raise RuntimeError(result["name"] + result["message"])
+        data = response.json()
+        if data.get("exception", False):
+            raise RuntimeError(data["name"] + data["message"])
+        result = data["result"]
+        if result.get("status", 200) != 200:
+            raise RuntimeError(f"{result['status']}: {result['message']}")
         for location in result["data"]["items"]:
             location.update(location.pop("mapLocation", {}))
             item = DictParser.parse(location)
@@ -76,6 +85,7 @@ class BambuSpider(Spider):
             set_social_media(item, SocialMedia.YELP, location.get("yelp"))
             item["addr_full"] = location.get("address")
             item["branch"] = location.get("title", "").removeprefix("Bambu ")
+            item.pop("name")
 
             if location.get("instagram") != "https://www.instagram.com/bambudessertdrinks/":
                 set_social_media(item, SocialMedia.INSTAGRAM, location.get("instagram"))
