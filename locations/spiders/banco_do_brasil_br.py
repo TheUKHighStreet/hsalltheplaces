@@ -20,7 +20,6 @@ class BancoDoBrasilBRSpider(Spider):
     name = "banco_do_brasil_br"
     item_attributes = {"brand": "Banco do Brasil", "brand_wikidata": "Q610817"}
     custom_settings = {"USER_AGENT": BROWSER_DEFAULT}  # Cloudflare serves an HTML challenge to non-browser UAs
-    requires_proxy = "BR"  # Cloudflare also blocks data-centre IPs (CI fetch gets the challenge)
 
     async def start(self) -> AsyncIterator[Any]:
         # uf=todos returns a type nationwide in one response; tipoServico 0 = no service filter. The search
