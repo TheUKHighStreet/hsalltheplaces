@@ -13,7 +13,6 @@ class EuromasterNLSpider(SitemapSpider, StructuredDataSpider):
     sitemap_rules = [(r"^https://www\.euromaster\.nl/garages/[^/]+/[^/]+/[^/]+$", "parse_sd")]
     wanted_types = ["AutoRepair"]
     # CloudFront blocks direct requests with a 202 challenge; route through Zyte proxy.
-    requires_proxy = True
 
     def post_process_item(self, item: Feature, response: Response, ld_data: dict, **kwargs):
         item["branch"] = item.pop("name").removeprefix("Euromaster ")
