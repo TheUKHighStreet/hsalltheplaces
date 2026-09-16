@@ -17,7 +17,6 @@ class BankOfNewZealandNZSpider(Spider):
     name = "bank_of_new_zealand_nz"
     item_attributes = {"brand": "Bank of New Zealand", "brand_wikidata": "Q806687"}
     allowed_domains = ["www.bnz.co.nz"]
-    requires_proxy = "NZ"  # Akamai bot protection blocks non-NZ / datacentre IPs
 
     # The locator only exposes a "nearest to a point" endpoint that returns the sites
     # near the point capped at ~10 results. It is seeded with a country-wide 24 km grid
