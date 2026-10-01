@@ -7,8 +7,8 @@ class ToysRUSGBSpider(StoremapperSpider):
     item_attributes = {
         "brand": "Toys R Us",
         "brand_wikidata": "Q125186363",
-        "located_in": "WHSmith",
-        "located_in_wikidata": "Q1548712",
+        "located_in": "TGJones",
+        "located_in_wikidata": "Q133575797",
     }
     company_id: str = "26714-C1AzPSOgcoRLNRqU"
     custom_settings = {"ROBOTSTXT_OBEY": False}
