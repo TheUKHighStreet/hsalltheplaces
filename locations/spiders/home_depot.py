@@ -15,7 +15,6 @@ from locations.user_agents import BROWSER_DEFAULT
 class HomeDepotSpider(PlaywrightSpider):
     name = "home_depot"
     item_attributes = {"brand": "The Home Depot", "brand_wikidata": "Q864407"}
-    requires_proxy = "US"
     custom_settings = DEFAULT_PLAYWRIGHT_SETTINGS | {
         "CONCURRENT_REQUESTS": 1,
         "DOWNLOAD_DELAY": 10,
